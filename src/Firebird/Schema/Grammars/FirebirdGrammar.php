@@ -678,9 +678,15 @@ class FirebirdGrammar extends Grammar
         $sql = "CREATE OR ALTER TRIGGER {$trigger} FOR {$table}\n";
         $sql .= "ACTIVE BEFORE INSERT\n";
         $sql .= "AS\n";
+        $sql .= "declare variable \"next_id\" integer;\n";
+        $sql .= "declare variable \"tmp\" integer;\n";
         $sql .= "BEGIN\n";
-        $sql .= "  IF (NEW.{$column} IS NULL) THEN \n";
-        $sql .= "    NEW.{$column} = NEXT VALUE FOR {$sequence};\n";
+        $sql .= "\"next_id\" = NEXT VALUE FOR {$sequence};\n";
+        $sql .= "\"tmp\" = (select max(coalesce({$column},0)) from {$table});\n";
+        $sql .= "  IF (NEW.{$column} IS NULL) THEN\n";
+        $sql .= "    IF(\"tmp\" > \"next_id\") THEN\n";
+        $sql .= "      \"next_id\" = gen_id({$sequence},\"tmp\" - \"next_id\");\n";
+        $sql .= "NEW.{$column} = \"next_id\";\n";
         $sql .= 'END';
 
         return $sql;
