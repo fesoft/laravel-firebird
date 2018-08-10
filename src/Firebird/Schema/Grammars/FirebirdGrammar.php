@@ -682,7 +682,7 @@ class FirebirdGrammar extends Grammar
         $sql .= "declare variable \"tmp\" integer;\n";
         $sql .= "BEGIN\n";
         $sql .= "\"next_id\" = NEXT VALUE FOR {$sequence};\n";
-        $sql .= "\"tmp\" = (select max(coalesce({$column},0)) from {$table});\n";
+        $sql .= "\"tmp\" = (select max(coalesce({$column},0)) + 1 from {$table});\n";
         $sql .= "  IF (NEW.{$column} IS NULL) THEN\n";
         $sql .= "    IF(\"tmp\" > \"next_id\") THEN\n";
         $sql .= "      \"next_id\" = gen_id({$sequence},\"tmp\" - \"next_id\");\n";
