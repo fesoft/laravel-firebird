@@ -688,8 +688,8 @@ class FirebirdGrammar extends Grammar
         $sql .= "       IF(\"tmp\" > \"next_id\") THEN\n";
         $sql .= "           \"next_id\" = gen_id({$sequence},\"tmp\" - \"next_id\");\n";
         $sql .= "       NEW.{$column} = \"next_id\";\n";
-        $sql .= '    END';
-        $sql .= 'END';
+        $sql .= "   END\n";
+        $sql .= "END";
    
         return $sql;
     }
