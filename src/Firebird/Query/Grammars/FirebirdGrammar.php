@@ -16,10 +16,63 @@ class FirebirdGrammar extends Grammar
         'like', 'not like', 'between', 'containing', 'starting with',
         'similar to', 'not similar to',
     ];
+	  /**
+	 * Compile a select query into SQL.
+	 *
+	 * @param  \Illuminate\Database\Query\Builder  $query
+	 * @return string
+	 */
+	public function compileSelect(Builder $query)
+	{
+	    $sql = parent::compileSelect($query);
+	    $sql1 = str_replace('"','', $sql);
+	    return $sql1;
+	}
+  /**
+   * Compile an insert statement into SQL.
+   *
+   * @param  \Illuminate\Database\Query\Builder  $query
+   * @param  array  $values
+   * @return string
+   */
+  public function compileInsert(Builder $query, array $values)
+  {
+      // Essentially we will force every insert to be treated as a batch insert which
+      // simply makes creating the SQL easier for us since we can utilize the same
+      // basic routine regardless of an amount of records given to us to insert.
+      $table = $this->wrapTable($query->from);
 
+      if (! is_array(reset($values))) {
+          $values = [$values];
+      }
+
+      $columns = $this->columnize(array_keys(reset($values)));
+
+      // We need to build a list of parameter place-holders of values that are bound
+      // to the query. Each insert should have the exact same amount of parameter
+      // bindings so we will loop through the record and parameterize them all.
+      $parameters = collect($values)->map(function ($record) {
+          return '('.$this->parameterize($record).')';
+      })->implode(', ');
+      $insert =  "insert into $table ($columns) values $parameters";
+      return str_replace('"','', $insert);
+  }
+  /**
+   * Compile a delete statement into SQL.
+   *
+   * @param  \Illuminate\Database\Query\Builder  $query
+   * @return string
+   */
+  public function compileDelete(Builder $query)
+  {
+      $wheres = is_array($query->wheres) ? $this->compileWheres($query) : '';
+
+      $delete = trim("delete from {$this->wrapTable($query->from)} $wheres");
+      return str_replace('"','', $delete);
+  }
     /**
      * Compile SQL statement for get context variable value
-     * 
+     *
      * @param \Illuminate\Database\Query\Builder  $query
      * @param string $namespace
      * @param string $name
@@ -29,10 +82,10 @@ class FirebirdGrammar extends Grammar
     {
         return "SELECT RDB\$GET_CONTEXT('{$namespace}', '{$name}' AS VAL FROM RDB\$DATABASE";
     }
-    
+
     /**
      * Compile SQL statement for execute function
-     * 
+     *
      * @param \Illuminate\Database\Query\Builder  $query
      * @param string $function
      * @param array $values
@@ -41,13 +94,13 @@ class FirebirdGrammar extends Grammar
     public function compileExecFunction(Builder $query, $function, array $values = null)
     {
         $function = $this->wrap($function);
-        
+
         return "SELECT  {$function} (" . $this->parameterize($values) . ") AS VAL FROM RDB\$DATABASE";
-    }    
+    }
 
     /**
      * Compile SQL statement for execute procedure
-     * 
+     *
      * @param \Illuminate\Database\Query\Builder  $query
      * @param string $procedure
      * @param array $values
@@ -56,7 +109,7 @@ class FirebirdGrammar extends Grammar
     public function compileExecProcedure(Builder $query, $procedure, array $values = null)
     {
         $procedure = $this->wrap($procedure);
-        
+
         return "EXECUTE PROCEDURE {$$procedure} (" . $this->parameterize($values) . ')';
     }
 
@@ -74,7 +127,7 @@ class FirebirdGrammar extends Grammar
             $sequence = 'id';
         }
 
-        return $this->compileInsert($query, $values) . ' RETURNING ' . $this->wrap($sequence);
+        return $this->compileInsert($query, $values) . ' RETURNING ' . strtolower($sequence);
     }
 
     /**
@@ -112,7 +165,7 @@ class FirebirdGrammar extends Grammar
 
     /**
      * Compile SQL statement for get next sequence value
-     * 
+     *
      * @param \Illuminate\Database\Query\Builder  $query
      * @param string $sequence
      * @param int $increment
@@ -170,7 +223,8 @@ class FirebirdGrammar extends Grammar
 
         $where = $this->compileUpdateWheres($query);
 
-        return trim("UPDATE {$table} SET {$columns} $where");
+        $update = trim("UPDATE {$table} SET {$columns} $where");
+        return str_replace('"', '' , $update);
     }
 
     /**
