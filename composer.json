@@ -2,7 +2,7 @@
     "name": "fesoft/laravel-firebird",
     "description": "A Firebird database package for the Laravel Framework",
     "license": "MIT",
-    "version": "1.0.0.0",
+    "version": "1.0.0.1",
     "authors": [
          {
             "name": "Jacques van Zuydam",
@@ -20,10 +20,10 @@
     "minimum-stability": "dev",
     "require": {
       "php": ">=7.0.0",
-      "illuminate/support": "5.6.*",
-      "illuminate/container": "5.6.*",
-      "illuminate/database": "5.6.*",
-      "illuminate/events": "5.6.*"
+      "illuminate/support": "5.8.*",
+      "illuminate/container": "5.8.*",
+      "illuminate/database": "5.8.*",
+      "illuminate/events": "5.8.*"
     },
     "autoload":{
       "psr-0": {
